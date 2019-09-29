@@ -117,10 +117,51 @@ async function getStatuses() {
     try {
         const response = await fetch(url,{method: "GET"});
         try {
-            const textResponse = await response.json();
-            console.log(textResponse.allstatuses);
-            gui.allstatuses = textResponse.allstatuses;
-            taskBoxInstance.allStatuses = textResponse.allstatuses;
+            const jsonResponse = await response.json();
+            if (jsonResponse.responseStatus) {
+                gui.allstatuses = jsonResponse.allstatuses;
+                taskBoxInstance.allStatuses = jsonResponse.allstatuses;
+            } else {
+                console.log('Did not find statuses on server')
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function getTasklist() {
+    const url='../TaskServices/broker/tasklist';
+    try {
+       const response = await fetch(url, {method: "GET"});
+       try {
+           const jsonResponse = await response.json();
+           if (jsonResponse.responseStatus) {
+              jsonResponse.tasks.forEach(task => gui.showTask(task))
+           }
+       } catch (error) {
+          console.log(error)
+       }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function postTask(task){}
+
+async function putStatus(task){
+    const url=`../TaskServices/broker/task/${task.id}`;
+    try {
+        const response = await fetch(url,{
+            method: "PUT",
+            headers: {"Content-Type": "application/json; charset=utf-8"},
+            body: JSON.stringify({'status': 'DONE'})
+        })
+        try {
+            const text = await response.text()
+            console.log(text)
         } catch (error) {
             console.log(error)
         }
@@ -131,19 +172,51 @@ async function getStatuses() {
 
 async function main() {
     await getStatuses();
+    await getTasklist();
 
-    tasks.forEach((task) => {gui.showTask(task)});
-    gui.update({"id":1,"status":"ACTIVE"});
-    gui.removeTask(2);
-
-    gui.deleteTaskCallback = (id) => {
+    gui.deleteTaskCallback = async (id) => {
         console.log(`User has approved the deletion of task with id ${id}.`);
-        gui.removeTask(id)
+        const url=`../TaskServices/broker/task/${id}`;
+        try {
+            const response = await fetch(url,{method: "DELETE"});
+            try {
+                const jsonResponse = await response.json();
+                if (jsonResponse.responseStatus){
+                    gui.removeTask(jsonResponse.id)
+                } else {
+                    console.log('The server did not complete the delete request')
+                    console.log(`Task with id ${id} was not deleted on the server`)
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        } catch (error) {
+            console.log(error)
+        }
     }
 
-    gui.newStatusCallback = (id,newStatus) => {
-        console.log(`User has approved to change the status of task with id ${id} to ${newStatus}.`)
-        gui.update({"id":id,"status":newStatus})
+    gui.newStatusCallback = async (id,newStatus) => {
+        console.log(`User has approved to change the status of task with id ${id} to ${newStatus}.`);
+        const url=`../TaskServices/broker/task/${id}`;
+        try {
+            const response = await fetch(url,{
+                method: "PUT",
+                headers: {"Content-Type": "application/json; charset=utf-8"},
+                body: JSON.stringify({'status': newStatus})
+            });
+            try {
+                const jsonResponse = await response.json();
+                if (jsonResponse.responseStatus){
+                   gui.update({id, status} = jsonResponse)
+                } else {
+                    console.log('The server did not complete the put request')
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        } catch (error) {
+            console.log(error)
+        }
     }
 }
 
