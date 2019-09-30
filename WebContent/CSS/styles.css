@@ -33,3 +33,10 @@
 	text-decoration: none;
 	cursor: pointer;
 }
+tr:nth-child(even) {
+	background-color: grey;
+}
+tbody{
+	border: #b074a8 solid 1px;
+	border-radius: 5px;
+}
