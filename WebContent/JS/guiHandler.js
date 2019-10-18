@@ -52,11 +52,10 @@ class GuiHandler {
          let buttonHTML = document.createElement("button");
          buttonHTML.innerText = "Remove";
          buttonHTML.type = "button";
-         buttonHTML.onclick = function() {
+         buttonHTML.onclick = () => {
             let result = window.confirm(`Delete task ${task.title}?`);
             if(result){
-               // gui.removeTask(task.id)
-               gui.deleteTaskCallback(task.id);
+               this.deleteTaskCallback(task.id);
             }
          };
          tdRemove.appendChild(buttonHTML);
@@ -70,7 +69,7 @@ class GuiHandler {
 
 
       } else {
-         console.error("id of task already exists")
+         console.log(`Task with ${task.id} is already on page, skipped this task`)
       }
    }
    update(task){

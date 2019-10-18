@@ -2,6 +2,17 @@
 
 const gui = new GuiHandler();
 
+const modalDiv = document.getElementsByClassName("modal")[0];
+const newTaskButton = document.getElementById("newTask");
+
+let taskBoxInstance = new taskBox(modalDiv);
+let lastClick = 0;
+
+newTaskButton.addEventListener("click", () => {
+    taskBoxInstance.show();
+    lastClick = 1;
+}, true);
+
 async function getStatuses() {
     const url='../TaskServices/broker/allstatuses';
     try {
@@ -92,7 +103,32 @@ async function main() {
         } catch (error) {
             console.log(error)
         }
-    }
+    };
+
+    taskBoxInstance.onSubmit = async (task) => {
+        console.log(`New task '${task.title}' with initial status ${task.status} is added by the user.`);
+        const url=`../TaskServices/broker/task`;
+        try {
+            const response = await fetch(url,{
+                method: "POST",
+                headers: {"Content-Type": "application/json; charset=utf-8"},
+                body: JSON.stringify({'title': task.title, 'status': task.status})
+            });
+            try {
+                const jsonResponse = await response.json();
+                if (jsonResponse.responseStatus){
+                    gui.showTask(jsonResponse.task)
+                } else {
+                    console.log('The server did not complete the POST request')
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+        taskBoxInstance.close()
+    };
 }
 
 main();
